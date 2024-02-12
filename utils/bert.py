@@ -1,7 +1,22 @@
 import torch
+from transformers import BertModel, BertTokenizer
+from .data import Lemmatizer
 
-
-def get_embeddings_from_sentence(sentence: str, model, tokenizer, lemmatizer, termins: list[str]):
+def get_embeddings_from_sentence(
+        sentence: str,
+        model: BertModel,
+        tokenizer: BertTokenizer,
+        lemmatizer: Lemmatizer,
+        termins: list[str]
+):
+    """
+    :param sentence: given sentence to process
+    :param model: bert model
+    :param tokenizer: bert tokenizer
+    :param lemmatizer: lemmatizer, that lemmatizes the text
+    :param termins: list of termins
+    :return:
+    """
     bert_embeddings = []
     zero_pair = torch.tensor([0, 0])
     bases_dict = lemmatizer.get_word_bases(sentence)
@@ -24,7 +39,21 @@ def get_embeddings_from_sentence(sentence: str, model, tokenizer, lemmatizer, te
     return bert_embeddings
 
 
-def get_embeddings_from_document(document: str, model, tokenizer, lemmatizer, termins: list[str]):
+def get_embeddings_from_document(
+        document: str,
+        model: BertModel,
+        tokenizer: BertTokenizer,
+        lemmatizer: Lemmatizer,
+        termins: list[str]
+):
+    """
+    :param sentence: given document to process
+    :param model: bert model
+    :param tokenizer: bert tokenizer
+    :param lemmatizer: lemmatizer, that lemmatizes the text
+    :param termins: list of termins
+    :return:
+    """
     sentences = document.split('.')
     embeddings = []
     for sentence in sentences:

@@ -5,7 +5,15 @@ from tqdm.auto import tqdm
 
 
 class BertCluster:
+    """
+    Structure to hold the cluster
+    """
     def __init__(self, embeddings: list[torch.Tensor], start_id: int = None, label: int = -1):
+        """
+        :param embeddings: given word context embeddings
+        :param start_id: is or list od ids
+        :param label: label or list of labels
+        """
         self.embeddings = embeddings
 
         self.ids = []
@@ -28,12 +36,19 @@ class BertCluster:
         return set(self.ids) == set(other.ids)
 
     def extend_cluster(self, cluster):
+        """
+        Extends the cluster with elements of another cluster
+        :param cluster: another cluster (BertCluster)
+        """
         self.embeddings.extend(cluster.embeddings)
         self.ids.extend(cluster.ids)
         self.labels.extend(cluster.labels)
 
 
 class BertHierarchicalClustering:
+    """
+    structure to perform hierarchical clustering
+    """
     def __init__(self, clusters: list[BertCluster] = None):
         self.clusters = dict()
         if clusters is not None:
@@ -44,6 +59,9 @@ class BertHierarchicalClustering:
         self.dist_mat = self.create_dist_mat()
 
     def create_dist_mat(self) -> dict[dict[int: float]]:
+        """
+        :return: create the matrix (actually dict of dicts) of distances between clusters
+        """
         dist_mat = dict()
         for cluster_id_1 in self.clusters.keys():
             dist_mat[cluster_id_1] = dict()
@@ -59,6 +77,10 @@ class BertHierarchicalClustering:
         return len(self.clusters)
 
     def add_cluster(self, cluster: BertCluster):
+        """
+        adds cluster to the structure
+        :param cluster: cluster to add
+        """
         if cluster.ids[0] in self.clusters.keys():
             raise KeyError("The clusters has the same id")
         new_id = cluster.ids[0]
@@ -75,6 +97,9 @@ class BertHierarchicalClustering:
                     self.clusters[cluster_id], cluster)
 
     def delete_cluster(self, cluster_id: int):
+        """
+        :param cluster_id: cluster id to delete the cluster
+        """
         if not cluster_id in self.clusters.keys():
             raise KeyError("There is no such cluster id")
         self.clusters.pop(cluster_id)
@@ -84,6 +109,10 @@ class BertHierarchicalClustering:
 
     @staticmethod
     def cluster_distance(cluster1: BertCluster, cluster2: BertCluster) -> float:
+        """
+        :return: the distance between two clusters
+            at present it is minima of distances between embeddings
+        """
         if cluster1 == cluster2:
             return 0.0
         distances = [
@@ -94,6 +123,10 @@ class BertHierarchicalClustering:
 
     @staticmethod
     def vector_cluster_distance(vector: torch.Tensor, cluster: BertCluster):
+        """
+        :return: the distance between cluster and embedding
+            at present it is minima of distances between embeddings
+        """
         distances = []
         for cluster_vector in cluster.embeddings:
             distance = torch.sum((vector - cluster_vector) ** 2).cpu().numpy()
@@ -101,6 +134,10 @@ class BertHierarchicalClustering:
         return np.min(distances)
 
     def find_nearest_clusters(self) -> tuple[int, int]:
+        """
+        find two nearest clusters by checking all distances in self.dist_mat
+        :return: cluster_id_1, cluster_id_2 : tuple of two cluster ids
+        """
         ans = None, None
         min_dist = None
         for cluster_id_1 in self.clusters.keys():
@@ -114,6 +151,9 @@ class BertHierarchicalClustering:
         return ans
 
     def reduce_one_cluster(self):
+        """
+        Makes one step in hierarchical algorithm
+        """
         cluster_id_1, cluster_id_2 = self.find_nearest_clusters()
         new_cluster = self.clusters[cluster_id_1]
         new_cluster.extend_cluster(self.clusters[cluster_id_2])
@@ -122,5 +162,9 @@ class BertHierarchicalClustering:
         self.add_cluster(new_cluster)
 
     def make_clusters(self, num):
+        """
+        perform hierarchical algorithm
+        :param num: desired number of clusters
+        """
         for _ in tqdm(list(range(len(self) - num))):
             self.reduce_one_cluster()
