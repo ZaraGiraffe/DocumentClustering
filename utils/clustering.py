@@ -24,7 +24,7 @@ class BertCluster:
         elif isinstance(start_id, list):
             self.ids = start_id
 
-        if isinstance(label, int):
+        if isinstance(label, (int, str)):
             self.labels = [label]
         elif isinstance(label, list):
             self.labels = label
@@ -49,7 +49,14 @@ class BertHierarchicalClustering:
     """
     structure to perform hierarchical clustering
     """
-    def __init__(self, clusters: list[BertCluster] = None):
+    def __init__(self, clusters: list[BertCluster] = None, distance_type: str = "cosine"):
+        """
+        :param clusters: list of initial clusters
+        :param distance_type: see vector_distance
+        """
+        self.distance_type = distance_type
+        if distance_type not in ["euclidian", "cosine"]:
+            raise Exception("wrong type of distance_type")
         self.clusters = dict()
         if clusters is not None:
             self.clusters = {
@@ -70,7 +77,7 @@ class BertHierarchicalClustering:
                     dist_mat[cluster_id_1][cluster_id_2] = dist_mat[cluster_id_2][cluster_id_1]
                 else:
                     dist_mat[cluster_id_1][cluster_id_2] = self.cluster_distance(self.clusters[cluster_id_1],
-                                                                                 self.clusters[cluster_id_2])
+                                                                self.clusters[cluster_id_2], self.distance_type)
         return dist_mat
 
     def __len__(self):
@@ -108,30 +115,48 @@ class BertHierarchicalClustering:
             self.dist_mat[cluster_id_dop].pop(cluster_id)
 
     @staticmethod
-    def cluster_distance(cluster1: BertCluster, cluster2: BertCluster) -> float:
+    def cluster_distance(cluster1: BertCluster, cluster2: BertCluster, typ: str = "cosine") -> float:
         """
+        :param typ: see vector_distance
         :return: the distance between two clusters
             at present it is minima of distances between embeddings
         """
         if cluster1 == cluster2:
             return 0.0
         distances = [
-            BertHierarchicalClustering.vector_cluster_distance(vector, cluster2)
+            BertHierarchicalClustering.vector_cluster_distance(vector, cluster2, typ)
             for vector in cluster1.embeddings
         ]
-        return np.min(distances)
+        return np.average(distances)
 
     @staticmethod
-    def vector_cluster_distance(vector: torch.Tensor, cluster: BertCluster):
+    def vector_cluster_distance(vector: torch.Tensor, cluster: BertCluster, typ: str = "cosine"):
         """
+        :param typ: see vector_distance
         :return: the distance between cluster and embedding
             at present it is minima of distances between embeddings
         """
         distances = []
         for cluster_vector in cluster.embeddings:
-            distance = torch.sum((vector - cluster_vector) ** 2).cpu().numpy()
+            distance = BertHierarchicalClustering.vector_distance(vector, cluster_vector, typ)
             distances.append(distance)
-        return np.min(distances)
+        return np.average(distances)
+
+    @staticmethod
+    def vector_distance(vector1: torch.Tensor, vector2: torch.Tensor, typ: str = "cosine"):
+        """
+        :param typ: string that specifies the type of distance to calculate: ["cosine", "euclidian"]
+        :return:
+        """
+        if typ == "euclidian":
+            distance = torch.sum((vector1 - vector2) ** 2).cpu().numpy()
+        elif typ == "cosine":
+            distance = torch.sum(vector1 * vector2) / \
+                       torch.sqrt(torch.sum(vector1 * vector1) * torch.sum(vector2 * vector2))
+        else:
+            raise Exception("wrong type of typ")
+        return distance.numpy()
+
 
     def find_nearest_clusters(self) -> tuple[int, int]:
         """
