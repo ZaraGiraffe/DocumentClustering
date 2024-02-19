@@ -35,6 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--log_res", help="where to output the results of clustering", default="log_res.txt")
     parser.add_argument("--log_level", help="how much output to give", default=1, type=int)
     parser.add_argument("--clusters", help="how much clusters to create", default=10, type=int)
+    parser.add_argument("--cuda", help="0/1 enable/disable cuda", default=0, type=int)
 
     args = parser.parse_args()
 
@@ -55,13 +56,20 @@ if __name__ == "__main__":
         pass
 
     for i in tqdm(numbers):
-        embeddings = get_embeddings_from_document(dataset[i]["text"], model, tokenizer, lemmatizer, termins)
+        try:
+            embeddings = get_embeddings_from_document(dataset[i]["text"], model, tokenizer, lemmatizer, termins, args.cuda == 1)
+        except:
+            with open(args.log_res, "a") as file:
+                file.write(f" WARNING!!! Corrupted file [{i}], filename: {dataset[i]['filename']}" + '\n')
+            continue
         label = f"[{i}] " + dataset[i]["main_topic"]
         cluster = BertCluster(embeddings, i, label)
         hierarchical_clustering.add_cluster(cluster)
         if args.log_level >= 1:
             with open(args.log_res, "a") as file:
-                file.write(f"[{i}], embeddings: {len(cluster.embeddings)}" + '\n')
+                file.write(f"[{i}], embeddings: {len(cluster.embeddings)}" + ", "
+                           + f"filename: {dataset[i]['filename']}" + ", "
+                           + f"topic: {dataset[i]['main_topic']}" + "\n")
 
     for i in trange(num_samples - args.clusters):
         if args.log_level >= 2:

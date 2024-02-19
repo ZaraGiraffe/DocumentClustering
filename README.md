@@ -16,5 +16,5 @@ usage example:
 ```>python tools/create_termins.py --num 50 --file termins.json --lang en --stopwords ./stopwords/en.json --dataset ./doc.parquet```  
 - **tools/make_clusters.py**  
 usage example:  
-```>python tools/make_clusters.py --dataset dataset_ua.parquet --termins ./termins_ua.json --lang uk --max_samples 100 --seed 0 --log_res ./log_res.txt --log_level 2 --clusters 7```
+```>python tools/make_clusters.py --dataset dataset_ua.parquet --termins ./termins_ua.json --lang uk --max_samples 100 --seed 0 --log_res ./log_res.txt --log_level 2 --clusters 7 --cuda 0```
 
