@@ -10,11 +10,11 @@ word embedding using [Bert](https://huggingface.co/docs/transformers/model_doc/b
 use [Hierarchical clustering algorithm](https://en.wikipedia.org/wiki/Hierarchical_clustering) in order to cluster 
 the documents
 
-At present there are available 2 jupyter notebooks  
-- *select_words_tf_idf.ipynb*  
-selects the termin
-- *create_document_context_bert.ipynb*  
-create document contexts and clusters  
+There are two availabele tools:
+- **tools/create_termins.py**  
+usage example:  
+```>python tools/create_termins.py --num 50 --file termins.json --lang en --stopwords ./stopwords/en.json --dataset ./doc.parquet```  
+- **tools/make_clusters.py**  
+usage example:  
+```>python tools/make_clusters.py --dataset doc.parquet --termins ./termins.json --lang en --max_samples 20 --log_level 2 --seed 0 --clusters 2 --log_res ./log_res.txt --dataset ./doc.parquet ```
 
-Also there is alternative way to create termins:  
-```>python tools/create_termins.py --num 50 --file ./termins.json```
