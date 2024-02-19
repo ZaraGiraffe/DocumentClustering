@@ -1,9 +1,0 @@
-termins.json
-test.ipynb
-.idea/*
-.gitignore
-DatasetUA/*
-DocDataset/*
-doc.parquet
-log_res.txt
-dataset_ua.parquet
