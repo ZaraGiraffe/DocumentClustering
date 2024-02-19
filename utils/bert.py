@@ -17,6 +17,9 @@ def get_embeddings_from_sentence(
     :param termins: list of termins
     :return:
     """
+#    device = model.device
+#    if torch.cuda.is_available():
+#        model.to("cuda")
     bert_embeddings = []
     zero_pair = torch.tensor([0, 0])
     bases_dict = lemmatizer.get_word_bases(sentence)
@@ -33,9 +36,12 @@ def get_embeddings_from_sentence(
                     tokens_pos.append(i)
             if tokens_pos:
                 token_dict.pop("offset_mapping")
+#                if torch.cuda.is_available():
+#                    token_dict = {k: v.cuda() for k, v in token_dict.items()}
                 model_output = model(**token_dict).last_hidden_state[0]
                 for pos in tokens_pos:
-                    bert_embeddings.append(model_output[pos])
+                    bert_embeddings.append(model_output[pos].cpu())
+#    model.to(device)
     return bert_embeddings
 
 

@@ -49,13 +49,13 @@ class BertHierarchicalClustering:
     """
     structure to perform hierarchical clustering
     """
-    def __init__(self, clusters: list[BertCluster] = None, distance_type: str = "cosine"):
+    def __init__(self, clusters: list[BertCluster] = None, distance_type: str = "euclidian"):
         """
         :param clusters: list of initial clusters
         :param distance_type: see vector_distance
         """
         self.distance_type = distance_type
-        if distance_type not in ["euclidian", "cosine"]:
+        if distance_type not in ["euclidian", "euclidian"]:
             raise Exception("wrong type of distance_type")
         self.clusters = dict()
         if clusters is not None:
@@ -115,7 +115,7 @@ class BertHierarchicalClustering:
             self.dist_mat[cluster_id_dop].pop(cluster_id)
 
     @staticmethod
-    def cluster_distance(cluster1: BertCluster, cluster2: BertCluster, typ: str = "cosine") -> float:
+    def cluster_distance(cluster1: BertCluster, cluster2: BertCluster, typ: str = "euclidian") -> float:
         """
         :param typ: see vector_distance
         :return: the distance between two clusters
@@ -130,7 +130,7 @@ class BertHierarchicalClustering:
         return np.average(distances)
 
     @staticmethod
-    def vector_cluster_distance(vector: torch.Tensor, cluster: BertCluster, typ: str = "cosine"):
+    def vector_cluster_distance(vector: torch.Tensor, cluster: BertCluster, typ: str = "euclidian"):
         """
         :param typ: see vector_distance
         :return: the distance between cluster and embedding
@@ -143,14 +143,14 @@ class BertHierarchicalClustering:
         return np.average(distances)
 
     @staticmethod
-    def vector_distance(vector1: torch.Tensor, vector2: torch.Tensor, typ: str = "cosine"):
+    def vector_distance(vector1: torch.Tensor, vector2: torch.Tensor, typ: str = "euclidian"):
         """
         :param typ: string that specifies the type of distance to calculate: ["cosine", "euclidian"]
         :return:
         """
         if typ == "euclidian":
-            distance = torch.sum((vector1 - vector2) ** 2).cpu().numpy()
-        elif typ == "cosine":
+            distance = torch.sum((vector1 - vector2) ** 2)
+        elif typ == "euclidian":
             distance = torch.sum(vector1 * vector2) / \
                        torch.sqrt(torch.sum(vector1 * vector1) * torch.sum(vector2 * vector2))
         else:

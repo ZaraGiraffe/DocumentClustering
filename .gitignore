@@ -5,3 +5,5 @@ test.ipynb
 DatasetUA/*
 DocDataset/*
 doc.parquet
+log_res.txt
+dataset_ua.parquet
