@@ -1,4 +1,4 @@
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, concatenate_datasets
 import yaml
 import os
 
@@ -17,9 +17,21 @@ class IMDBDataset:
         return dataset
 
 class DatasetUA:
-    def __init__(self, dataset_dir):
-        self.dataset_dir = dataset_dir
-        self.dataset = self.load()
+    def __init__(self, dataset_dir=None, hf_repo=None):
+        """
+        :param dataset_dir:
+        :param from_hf:
+        """
+        if dataset_dir is None and hf_repo is None:
+            raise Exception("dataset_dir is None and hf_repo is None")
+        if dataset_dir:
+            self.dataset_dir = dataset_dir
+            self.dataset = self.load()
+        else:
+            self.dataset = load_dataset(hf_repo)
+            self.dataset = concatenate_datasets([self.dataset["train"], self.dataset["test"]])
+
+
 
     def load(self) -> Dataset:
         """
@@ -38,25 +50,29 @@ class DatasetUA:
         dataset = Dataset.from_generator(gen)
         return dataset
 
-    def load_sentences(self, min_len=-1, max_len=-1):
-        def gen():
-            for i in range(len(self.dataset)):
-                example = self.dataset[i]
-                label = example["filename"].split("_")[0]
-                sentences = example["text"].split('.')
-                for sen in sentences:
-                    if min_len != -1 and len(sen) < min_len:
-                        continue
-                    if max_len != -1 and len(sen) > max_len:
-                        continue
-                    yield dict(
-                        sentence=sen,
-                        label=label
-                    )
 
-        self.dataset = Dataset.from_generator(gen)
-        return self.dataset
+def convert_to_sequences(dataset: Dataset, min_len=-1, max_len=-1):
+    """
+    Converts each text to sentences
+    :param min_len: minimum required length of the sentence to be included
+    :param max_len: maximum required length of the sentence to be included
+    :return:
+    """
 
-    def shuffle(self, seed=42):
-        self.dataset = self.dataset.shuffle(seed=seed)
-        return self.dataset
+    def gen():
+        for i in range(len(dataset)):
+            example = dataset[i]
+            label = example["filename"].split("_")[0]
+            sentences = example["text"].split('.')
+            for sen in sentences:
+                if min_len != -1 and len(sen) < min_len:
+                    continue
+                if max_len != -1 and len(sen) > max_len:
+                    continue
+                yield dict(
+                    sentence=sen,
+                    label=label
+                )
+
+    dataset = Dataset.from_generator(gen)
+    return dataset
