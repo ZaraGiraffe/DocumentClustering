@@ -151,7 +151,7 @@ class Trainer:
     def save_model(self):
         torch.save(self.model.state_dict(), "model.pt")
         self.api.upload_file(
-            path_in_repo=self.config.save_repo_dir + "/" + self.model_name,
+            path_in_repo=self.config.save_repo_dir + "/" + self.model_name + ".pt",
             path_or_fileobj="./model.pt",
             repo_type="model",
             repo_id=self.config.hf_repo,

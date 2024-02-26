@@ -1,4 +1,7 @@
 from datasets import load_dataset, Dataset, concatenate_datasets
+from transformers import XLMRobertaConfig, XLMRobertaForSequenceClassification
+import torch
+import huggingface_hub as hub
 import yaml
 import os
 
@@ -76,3 +79,20 @@ def convert_to_sequences(dataset: Dataset, min_len=-1, max_len=-1):
 
     dataset = Dataset.from_generator(gen)
     return dataset
+
+
+def load_pretrained(checkpoint_name: str):
+    config = XLMRobertaConfig.from_pretrained("FacebookAI/xlm-roberta-base")
+    config.num_labels = 15
+    model_pr = XLMRobertaForSequenceClassification(config)
+
+    api = hub.HfApi()
+    api.hf_hub_download(
+        repo_id="Zarakun/ukrainian_news_classification",
+        repo_type="model",
+        filename="checkpoints/{}".format(checkpoint_name),
+        local_dir="./"
+    )
+
+    model_pr.load_state_dict(torch.load("./checkpoints/{}".format(checkpoint_name), map_location="cpu"))
+    return model_pr
